@@ -157,7 +157,7 @@
             team.safePoints = team.points !== undefined ? team.points : 0;
             team.safeCards = team.totalCards !== undefined ? team.totalCards : 0;
             team.safeValue = team.cardValue !== undefined ? team.cardValue : 0;
-            team.finalScore = team.safeValue - team.safePoints;
+            team.finalScore = team.safePoints - team.safeValue;
             teamsData.push(team);
         });
 
