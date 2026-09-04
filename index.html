@@ -50,25 +50,22 @@
 </div>
 
 <script type="module">
-    // 1. Import Firebase Firestore
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
-    // 2. Firebase Configuration (Matches your screenshot)
     const firebaseConfig = {
-        apiKey: "YOUR_API_KEY", // <--- PASTE YOUR API KEY HERE
+        apiKey: "AIzaSyD1yRD3JBY6srHSrNhOJwOtZ7dRN9haXMs",
         authDomain: "techbid-a3da7.firebaseapp.com",
         projectId: "techbid-a3da7",
-        storageBucket: "techbid-a3da7.appspot.com",
+        storageBucket: "techbid-a3da7.firebasestorage.app",
         messagingSenderId: "68972530231",
-        appId: "YOUR_APP_ID"    // <--- PASTE YOUR APP ID HERE
+        appId: "1:68972530231:web:eb4273da5da6f29a100db2",
+        measurementId: "G-T1WTL34TWG"
     };
 
-    // 3. Initialize App and Database
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // 4. Add Team to Firestore
     window.addTeam = async () => {
         const nameInput = document.getElementById("teamName");
         const pointsInput = document.getElementById("teamPoints");
@@ -89,7 +86,6 @@
         }
     };
 
-    // 5. Update Points in Firestore
     window.changePoints = async (id, currentPoints, amount) => {
         let newPoints = currentPoints + amount;
         if (newPoints < 0) newPoints = 0; 
@@ -102,7 +98,6 @@
         }
     };
 
-    // 6. Real-time Leaderboard Listener
     const teamsQuery = query(collection(db, "teams"), orderBy("points", "desc"));
     
     onSnapshot(teamsQuery, (snapshot) => {
@@ -117,7 +112,7 @@
         let index = 0;
         snapshot.forEach((docSnap) => {
             const team = docSnap.data();
-            const id = docSnap.id; // Unique Firebase document ID
+            const id = docSnap.id; 
             const teamDiv = document.createElement("div");
             teamDiv.className = "team";
 
@@ -128,7 +123,7 @@
                 <div class="team-name">${team.name}</div>
                 <div class="points">${team.points}</div>
                 <div class="controls">
-                    <button class="minus" onclick="changePoints('${id}', ${team.points}, 50)">+50</button>
+                    <button class="minus" onclick="changePoints('${id}', ${team.points}, -50)">-50</button>
                     <button class="plus" onclick="changePoints('${id}', ${team.points}, 1)">+1</button>
                     <button class="plus-five" onclick="changePoints('${id}', ${team.points}, 20)">+20</button>
                 </div>
