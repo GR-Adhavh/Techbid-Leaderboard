@@ -182,7 +182,7 @@
             team.safeMatch = team.cardMatch !== undefined ? team.cardMatch : 0;
             
             // Final Score Formula includes Review Score and Card Match if needed, or preserves the base calculation
-            team.finalScore = team.safePoints - team.safeValue + team.safeProblem + team.safeAdded + team.safeReview + team.safeMatch;
+            team.finalScore = team.safePoints + team.safeValue + team.safeProblem + team.safeAdded + team.safeReview + team.safeMatch;
             
             teamsData.push(team);
         });
