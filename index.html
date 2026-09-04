@@ -7,7 +7,7 @@
     <style>
         * { box-sizing: border-box; }
         body { margin: 0; font-family: Arial, sans-serif; background: #f4f6f8; color: #222; }
-        .container { max-width: 900px; margin: 50px auto; padding: 25px; }
+        .container { max-width: 950px; margin: 50px auto; padding: 25px; }
         h1 { text-align: center; margin-bottom: 25px; }
         .add-team, .leaderboard { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); margin-bottom: 25px; }
         .inputs { display: flex; gap: 10px; }
@@ -21,14 +21,14 @@
         .team-name { font-size: 18px; font-weight: bold; min-width: 120px; }
         
         /* Direct Edit Layout */
-        .stats-container { display: flex; gap: 20px; flex: 1; justify-content: center; background: #fff; padding: 10px 15px; border-radius: 6px; border: 1px solid #e2e8f0; }
+        .stats-container { display: flex; gap: 15px; flex: 1; justify-content: center; background: #fff; padding: 10px 15px; border-radius: 6px; border: 1px solid #e2e8f0; flex-wrap: wrap; }
         .stat { display: flex; flex-direction: column; align-items: center; font-size: 12px; color: #64748b; font-weight: bold; text-transform: uppercase; }
         
         /* Editable Input Fields */
         .stat-input { width: 70px; padding: 6px; font-size: 16px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; margin-top: 5px; font-weight: bold; color: #0f172a; flex: unset; }
         .stat-input:focus { outline: none; border-color: #2563eb; }
         
-        .stat-final { color: #2563eb; justify-content: center; }
+        .stat-final { color: #2563eb; justify-content: center; min-width: 70px; }
         .stat-final span { color: #2563eb; font-size: 22px; margin-top: 5px; }
         
         .controls { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
@@ -38,7 +38,7 @@
         .delete-btn:hover { background: #dc2626; }
         
         .empty { text-align: center; color: #777; padding: 20px; }
-        @media (max-width: 768px) { .inputs, .stats-container, .team { flex-direction: column; align-items: stretch; } .controls { justify-content: space-between; } }
+        @media (max-width: 850px) { .inputs, .stats-container, .team { flex-direction: column; align-items: stretch; } .controls { justify-content: space-between; } }
     </style>
 </head>
 <body>
@@ -97,7 +97,8 @@
                 name: name, 
                 points: points,
                 totalCards: 0,
-                cardValue: 0
+                cardValue: 0,
+                problemPoints: 0 // Initialize new column
             });
             nameInput.value = "";
             pointsInput.value = "";
@@ -109,9 +110,10 @@
     window.saveStats = async (id) => {
         const cardsVal = Number(document.getElementById(`cards_${id}`).value);
         const valueVal = Number(document.getElementById(`val_${id}`).value);
+        const probVal = Number(document.getElementById(`prob_${id}`).value);
         const pointsVal = Number(document.getElementById(`pts_${id}`).value);
 
-        if (isNaN(cardsVal) || isNaN(valueVal) || isNaN(pointsVal)) {
+        if (isNaN(cardsVal) || isNaN(valueVal) || isNaN(probVal) || isNaN(pointsVal)) {
             alert("Please ensure all fields contain valid numbers.");
             return;
         }
@@ -121,6 +123,7 @@
             await updateDoc(teamRef, { 
                 totalCards: cardsVal < 0 ? 0 : cardsVal,
                 cardValue: valueVal < 0 ? 0 : valueVal,
+                problemPoints: probVal, // Allows negative values for subtraction
                 points: pointsVal < 0 ? 0 : pointsVal
             });
         } catch (e) {
@@ -156,9 +159,10 @@
             team.safePoints = team.points !== undefined ? team.points : 0;
             team.safeCards = team.totalCards !== undefined ? team.totalCards : 0;
             team.safeValue = team.cardValue !== undefined ? team.cardValue : 0;
+            team.safeProblem = team.problemPoints !== undefined ? team.problemPoints : 0;
             
-            // Recalculated Final Score Formula
-            team.finalScore = team.safePoints - team.safeValue;
+            // Recalculated Final Score Formula (Points - Value + Problem Points)
+            team.finalScore = team.safePoints - team.safeValue + team.safeProblem;
             
             teamsData.push(team);
         });
@@ -178,6 +182,7 @@
                 <div class="stats-container">
                     <div class="stat">Cards <input type="number" class="stat-input" id="cards_${team.id}" value="${team.safeCards}" onkeydown="if(event.key === 'Enter') saveStats('${team.id}')"></div>
                     <div class="stat">Value <input type="number" class="stat-input" id="val_${team.id}" value="${team.safeValue}" onkeydown="if(event.key === 'Enter') saveStats('${team.id}')"></div>
+                    <div class="stat">Problem <input type="number" class="stat-input" id="prob_${team.id}" value="${team.safeProblem}" onkeydown="if(event.key === 'Enter') saveStats('${team.id}')"></div>
                     <div class="stat">Points <input type="number" class="stat-input" id="pts_${team.id}" value="${team.safePoints}" onkeydown="if(event.key === 'Enter') saveStats('${team.id}')"></div>
                     <div class="stat stat-final">Final <span>${team.finalScore}</span></div>
                 </div>
