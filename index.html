@@ -7,7 +7,7 @@
     <style>
         * { box-sizing: border-box; }
         body { margin: 0; font-family: Arial, sans-serif; background: #f4f6f8; color: #222; }
-        .container { max-width: 1100px; margin: 50px auto; padding: 25px; }
+        .container { max-width: 1200px; margin: 50px auto; padding: 25px; }
         h1 { text-align: center; margin-bottom: 25px; }
         .add-team, .leaderboard { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); margin-bottom: 25px; }
         .inputs { display: flex; gap: 10px; }
@@ -21,28 +21,28 @@
         .team-name { font-size: 18px; font-weight: bold; min-width: 100px; }
         
         /* Direct Edit Layout */
-        .stats-container { display: flex; gap: 15px; flex: 1; justify-content: center; background: #fff; padding: 10px 15px; border-radius: 6px; border: 1px solid #e2e8f0; flex-wrap: wrap; }
+        .stats-container { display: flex; gap: 12px; flex: 1; justify-content: center; background: #fff; padding: 10px 15px; border-radius: 6px; border: 1px solid #e2e8f0; flex-wrap: wrap; }
         .stat { display: flex; flex-direction: column; align-items: center; font-size: 12px; color: #64748b; font-weight: bold; text-transform: uppercase; }
         
         /* Editable Input Fields */
-        .stat-input { width: 70px; padding: 6px; font-size: 16px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; margin-top: 5px; font-weight: bold; color: #0f172a; flex: unset; }
+        .stat-input { width: 65px; padding: 6px; font-size: 15px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; margin-top: 5px; font-weight: bold; color: #0f172a; flex: unset; }
         .stat-input:focus { outline: none; border-color: #2563eb; }
         
         /* Specific Styles for Problem Statement */
-        .problem-group { display: flex; gap: 5px; margin-top: 5px; }
-        .text-input { width: 130px; text-align: left; padding-left: 8px; font-size: 14px; font-weight: normal; }
+        .problem-group { display: flex; gap: 4px; margin-top: 5px; }
+        .text-input { width: 110px; text-align: left; padding-left: 6px; font-size: 13px; font-weight: normal; }
         
-        .stat-final { color: #2563eb; justify-content: center; min-width: 70px; }
-        .stat-final span { color: #2563eb; font-size: 22px; margin-top: 5px; }
+        .stat-final { color: #2563eb; justify-content: center; min-width: 60px; }
+        .stat-final span { color: #2563eb; font-size: 20px; margin-top: 5px; }
         
         .controls { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
-        .custom-btn { background: #10b981; color: white; font-weight: bold; padding: 12px 18px; }
+        .custom-btn { background: #10b981; color: white; font-weight: bold; padding: 12px 16px; }
         .custom-btn:hover { background: #059669; }
         .delete-btn { background: #ef4444; color: white; padding: 12px 15px; margin-left: 5px; }
         .delete-btn:hover { background: #dc2626; }
         
         .empty { text-align: center; color: #777; padding: 20px; }
-        @media (max-width: 1000px) { .inputs, .stats-container, .team { flex-direction: column; align-items: stretch; } .controls { justify-content: space-between; } }
+        @media (max-width: 1100px) { .inputs, .stats-container, .team { flex-direction: column; align-items: stretch; } .controls { justify-content: space-between; } }
     </style>
 </head>
 <body>
@@ -102,9 +102,11 @@
                 points: points,
                 totalCards: 0,
                 cardValue: 0,
-                problemName: "",      // Problem Statement Name
-                problemPoints: 0,     // Bidding Value (part of Problem Statement)
-                addedPoints: 0        // Separate Added Points box
+                problemName: "",      
+                problemPoints: 0,     
+                addedPoints: 0,       
+                reviewScore: 0,       // New Review Score column
+                cardMatch: 0          // New Card Match column
             });
             nameInput.value = "";
             pointsInput.value = "";
@@ -119,9 +121,11 @@
         const probNameVal = document.getElementById(`probName_${id}`).value.trim(); 
         const probVal = Number(document.getElementById(`probVal_${id}`).value);     
         const addedVal = Number(document.getElementById(`added_${id}`).value);     
+        const reviewVal = Number(document.getElementById(`review_${id}`).value);     
+        const matchVal = Number(document.getElementById(`match_${id}`).value);     
         const pointsVal = Number(document.getElementById(`pts_${id}`).value);
 
-        if (isNaN(cardsVal) || isNaN(valueVal) || isNaN(probVal) || isNaN(addedVal) || isNaN(pointsVal)) {
+        if (isNaN(cardsVal) || isNaN(valueVal) || isNaN(probVal) || isNaN(addedVal) || isNaN(reviewVal) || isNaN(matchVal) || isNaN(pointsVal)) {
             alert("Please ensure all number fields contain valid numbers.");
             return;
         }
@@ -134,6 +138,8 @@
                 problemName: probNameVal, 
                 problemPoints: probVal,   
                 addedPoints: addedVal,    
+                reviewScore: reviewVal,
+                cardMatch: matchVal,
                 points: pointsVal < 0 ? 0 : pointsVal
             });
         } catch (e) {
@@ -172,9 +178,11 @@
             team.safeProbName = team.problemName !== undefined ? team.problemName : "";
             team.safeProblem = team.problemPoints !== undefined ? team.problemPoints : 0;
             team.safeAdded = team.addedPoints !== undefined ? team.addedPoints : 0;
+            team.safeReview = team.reviewScore !== undefined ? team.reviewScore : 0;
+            team.safeMatch = team.cardMatch !== undefined ? team.cardMatch : 0;
             
-            // Updated Final Score Formula: Points - Value + Problem Bidding + Added Points
-            team.finalScore = team.safePoints - team.safeValue + team.safeProblem + team.safeAdded;
+            // Final Score Formula includes Review Score and Card Match if needed, or preserves the base calculation
+            team.finalScore = team.safePoints - team.safeValue + team.safeProblem + team.safeAdded + team.safeReview + team.safeMatch;
             
             teamsData.push(team);
         });
@@ -204,7 +212,11 @@
                         </div>
                     </div>
 
-                    <div class="stat">Added Points <input type="number" class="stat-input" id="added_${team.id}" value="${team.safeAdded}" onkeydown="if(event.key === 'Enter') saveStats('${team.id}')"></div>
+                    <div class="stat">Added Pts <input type="number" class="stat-input" id="added_${team.id}" value="${team.safeAdded}" onkeydown="if(event.key === 'Enter') saveStats('${team.id}')"></div>
+
+                    <div class="stat">Review <input type="number" class="stat-input" id="review_${team.id}" value="${team.safeReview}" onkeydown="if(event.key === 'Enter') saveStats('${team.id}')"></div>
+
+                    <div class="stat">Match <input type="number" class="stat-input" id="match_${team.id}" value="${team.safeMatch}" onkeydown="if(event.key === 'Enter') saveStats('${team.id}')"></div>
                     
                     <div class="stat">Points <input type="number" class="stat-input" id="pts_${team.id}" value="${team.safePoints}" onkeydown="if(event.key === 'Enter') saveStats('${team.id}')"></div>
                     
