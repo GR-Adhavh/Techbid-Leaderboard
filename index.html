@@ -49,8 +49,8 @@
     <div class="add-team">
         <h3>Add Team</h3>
         <div class="inputs">
-            <input type="text" id="teamName" placeholder="Enter team name">
-            <input type="number" id="teamPoints" placeholder="Starting Points" min="0">
+            <input type="text" id="teamName" placeholder="Enter team name" onkeydown="if(event.key === 'Enter') addTeam()">
+            <input type="number" id="teamPoints" placeholder="Starting Points" min="0" onkeydown="if(event.key === 'Enter') addTeam()">
             <button class="add-btn" onclick="addTeam()">Add Team</button>
         </div>
     </div>
@@ -106,7 +106,6 @@
         }
     };
 
-    // Saves the exact values currently typed into the team's textboxes
     window.saveStats = async (id) => {
         const cardsVal = Number(document.getElementById(`cards_${id}`).value);
         const valueVal = Number(document.getElementById(`val_${id}`).value);
@@ -157,11 +156,13 @@
             team.safePoints = team.points !== undefined ? team.points : 0;
             team.safeCards = team.totalCards !== undefined ? team.totalCards : 0;
             team.safeValue = team.cardValue !== undefined ? team.cardValue : 0;
+            
+            // Recalculated Final Score Formula
             team.finalScore = team.safePoints - team.safeValue;
+            
             teamsData.push(team);
         });
 
-        // Sort locally by Final Score (Highest to Lowest)
         teamsData.sort((a, b) => b.finalScore - a.finalScore);
 
         teamsData.forEach((team, index) => {
@@ -175,9 +176,9 @@
                 <div class="team-name">${team.safeName}</div>
                 
                 <div class="stats-container">
-                    <div class="stat">Cards <input type="number" class="stat-input" id="cards_${team.id}" value="${team.safeCards}"></div>
-                    <div class="stat">Value <input type="number" class="stat-input" id="val_${team.id}" value="${team.safeValue}"></div>
-                    <div class="stat">Points <input type="number" class="stat-input" id="pts_${team.id}" value="${team.safePoints}"></div>
+                    <div class="stat">Cards <input type="number" class="stat-input" id="cards_${team.id}" value="${team.safeCards}" onkeydown="if(event.key === 'Enter') saveStats('${team.id}')"></div>
+                    <div class="stat">Value <input type="number" class="stat-input" id="val_${team.id}" value="${team.safeValue}" onkeydown="if(event.key === 'Enter') saveStats('${team.id}')"></div>
+                    <div class="stat">Points <input type="number" class="stat-input" id="pts_${team.id}" value="${team.safePoints}" onkeydown="if(event.key === 'Enter') saveStats('${team.id}')"></div>
                     <div class="stat stat-final">Final <span>${team.finalScore}</span></div>
                 </div>
 
