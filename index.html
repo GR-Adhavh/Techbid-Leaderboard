@@ -7,7 +7,7 @@
     <style>
         * { box-sizing: border-box; }
         body { margin: 0; font-family: Arial, sans-serif; background: #f4f6f8; color: #222; }
-        .container { max-width: 700px; margin: 50px auto; padding: 25px; }
+        .container { max-width: 800px; margin: 50px auto; padding: 25px; }
         h1 { text-align: center; margin-bottom: 25px; }
         .add-team, .leaderboard { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); margin-bottom: 25px; }
         .inputs { display: flex; gap: 10px; }
@@ -15,16 +15,24 @@
         button { border: none; border-radius: 6px; padding: 10px 15px; font-size: 15px; cursor: pointer; }
         .add-btn { background: #2563eb; color: white; }
         .add-btn:hover { background: #1d4ed8; }
-        .team { display: flex; align-items: center; gap: 15px; padding: 15px; margin-bottom: 10px; background: #f8fafc; border-radius: 8px; }
-        .rank { width: 40px; font-size: 20px; font-weight: bold; text-align: center; }
-        .team-name { flex: 1; font-size: 18px; font-weight: bold; }
-        .points { font-size: 18px; font-weight: bold; min-width: 70px; text-align: center; }
-        .controls { display: flex; gap: 5px; }
+        
+        .team { display: flex; align-items: center; gap: 15px; padding: 15px; margin-bottom: 10px; background: #f8fafc; border-radius: 8px; flex-wrap: wrap; }
+        .rank { width: 30px; font-size: 20px; font-weight: bold; text-align: center; }
+        .team-name { flex: 1; font-size: 18px; font-weight: bold; min-width: 120px; }
+        .points { font-size: 18px; font-weight: bold; min-width: 50px; text-align: center; }
+        
+        .controls { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
         .minus { background: #ef4444; color: white; }
         .plus { background: #22c55e; color: white; }
         .plus-five { background: #f59e0b; color: white; }
+        
+        /* New Custom Input & Delete Styles */
+        .custom-input { width: 90px; padding: 8px; font-size: 14px; text-align: center; flex: unset; }
+        .custom-btn { background: #6366f1; color: white; }
+        .delete-btn { background: #374151; color: white; padding: 10px; }
+        
         .empty { text-align: center; color: #777; padding: 20px; }
-        @media (max-width: 600px) { .inputs { flex-direction: column; } .team { gap: 8px; } .controls { flex-wrap: wrap; } }
+        @media (max-width: 650px) { .inputs { flex-direction: column; } .team { gap: 10px; } }
     </style>
 </head>
 <body>
@@ -51,7 +59,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, updateDoc, doc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyD1yRD3JBY6srHSrNhOJwOtZ7dRN9haXMs",
@@ -66,19 +74,22 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    // Modified to save to the "Points" collection from your screenshot
+    const COLLECTION_NAME = "Points";
+
     window.addTeam = async () => {
         const nameInput = document.getElementById("teamName");
         const pointsInput = document.getElementById("teamPoints");
         const name = nameInput.value.trim();
         const points = Number(pointsInput.value);
 
-        if (name === "" || isNaN(points) || points < 0) {
-            alert("Please enter a valid team name and points.");
+        if (name === "" || isNaN(points) || points < 0 || pointsInput.value === "") {
+            alert("Please enter a valid team name and starting points.");
             return;
         }
 
         try {
-            await addDoc(collection(db, "teams"), { name: name, points: points });
+            await addDoc(collection(db, COLLECTION_NAME), { name: name, points: points });
             nameInput.value = "";
             pointsInput.value = "";
         } catch (e) {
@@ -90,7 +101,7 @@
         let newPoints = currentPoints + amount;
         if (newPoints < 0) newPoints = 0; 
 
-        const teamRef = doc(db, "teams", id);
+        const teamRef = doc(db, COLLECTION_NAME, id);
         try {
             await updateDoc(teamRef, { points: newPoints });
         } catch (e) {
@@ -98,7 +109,40 @@
         }
     };
 
-    const teamsQuery = query(collection(db, "teams"), orderBy("points", "desc"));
+    window.applyCustomPoints = async (id, currentPoints) => {
+        const inputField = document.getElementById(`custom_${id}`);
+        const customValStr = inputField.value.trim();
+        
+        // Throw an error alert if the input is not a number or is left blank
+        if (customValStr === "" || isNaN(customValStr)) {
+            alert("Error: Please enter a valid number (e.g., 10 or -5).");
+            return;
+        }
+        
+        const amount = Number(customValStr);
+        let newPoints = currentPoints + amount;
+        if (newPoints < 0) newPoints = 0;
+        
+        const teamRef = doc(db, COLLECTION_NAME, id);
+        try {
+            await updateDoc(teamRef, { points: newPoints });
+            inputField.value = ""; // Clear input after applying
+        } catch (e) {
+            console.error("Error updating points: ", e);
+        }
+    };
+
+    window.deleteTeam = async (id) => {
+        if (confirm("Are you sure you want to delete this team?")) {
+            try {
+                await deleteDoc(doc(db, COLLECTION_NAME, id));
+            } catch (e) {
+                console.error("Error deleting team: ", e);
+            }
+        }
+    };
+
+    const teamsQuery = query(collection(db, COLLECTION_NAME), orderBy("points", "desc"));
     
     onSnapshot(teamsQuery, (snapshot) => {
         const leaderboard = document.getElementById("leaderboardList");
@@ -118,14 +162,23 @@
 
             let rank = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : index + 1;
 
+            // Failsafe in case a manually added document in Firebase lacks a name or points field
+            const safeName = team.name || "Unnamed Team";
+            const safePoints = team.points !== undefined ? team.points : 0;
+
             teamDiv.innerHTML = `
                 <div class="rank">${rank}</div>
-                <div class="team-name">${team.name}</div>
-                <div class="points">${team.points}</div>
+                <div class="team-name">${safeName}</div>
+                <div class="points">${safePoints}</div>
                 <div class="controls">
-                    <button class="minus" onclick="changePoints('${id}', ${team.points}, -50)">-50</button>
-                    <button class="plus" onclick="changePoints('${id}', ${team.points}, 1)">+1</button>
-                    <button class="plus-five" onclick="changePoints('${id}', ${team.points}, 20)">+20</button>
+                    <button class="minus" onclick="changePoints('${id}', ${safePoints}, -50)">-50</button>
+                    <button class="plus" onclick="changePoints('${id}', ${safePoints}, 1)">+1</button>
+                    <button class="plus-five" onclick="changePoints('${id}', ${safePoints}, 20)">+20</button>
+                    
+                    <input type="number" class="custom-input" id="custom_${id}" placeholder="+/- Points">
+                    <button class="custom-btn" onclick="applyCustomPoints('${id}', ${safePoints})">Apply</button>
+                    
+                    <button class="delete-btn" onclick="deleteTeam('${id}')">🗑️</button>
                 </div>
             `;
             leaderboard.appendChild(teamDiv);
