@@ -171,9 +171,6 @@
                 <div class="team-name">${safeName}</div>
                 <div class="points">${safePoints}</div>
                 <div class="controls">
-                    <button class="minus" onclick="changePoints('${id}', ${safePoints}, -50)">-50</button>
-                    <button class="plus" onclick="changePoints('${id}', ${safePoints}, 1)">+1</button>
-                    <button class="plus-five" onclick="changePoints('${id}', ${safePoints}, 20)">+20</button>
                     
                     <input type="number" class="custom-input" id="custom_${id}" placeholder="+/- Points">
                     <button class="custom-btn" onclick="applyCustomPoints('${id}', ${safePoints})">Apply</button>
